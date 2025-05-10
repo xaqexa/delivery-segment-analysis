@@ -1,6 +1,10 @@
 SELECT 
 	products.product_id AS productId,
 	SUM(products.weight * orders_products.quantity) AS totalWeight
+INTO OUTFILE 'C:\Users\konta\OneDrive\Documents\Karol_Dzierzak.csv'
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
 FROM products
 JOIN orders_products ON orders_products.product_id=products.product_id
 JOIN orders ON orders.order_id = orders_products.order_id
