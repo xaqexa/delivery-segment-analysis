@@ -5,7 +5,7 @@ import seaborn as sns
 from datetime import datetime
 import matplotlib.ticker as ticker
 
-# Ustawienie stylu wykresów
+# styl wykresów
 plt.style.use('seaborn-v0_8-whitegrid')
 sns.set_palette("viridis")
 
@@ -16,7 +16,7 @@ def load_data():
     orders_products = pd.read_csv('orders_products.csv')
     route_segments = pd.read_csv('route_segments.csv')
     
-    # Konwersja czasów na datetime
+    # Konwersja czasów 
     if 'segment_start_time' in route_segments.columns and 'segment_end_time' in route_segments.columns:
         route_segments['segment_start_time'] = pd.to_datetime(route_segments['segment_start_time'])
         route_segments['segment_end_time'] = pd.to_datetime(route_segments['segment_end_time'])
@@ -24,34 +24,26 @@ def load_data():
     return orders, products, orders_products, route_segments
 
 def calculate_actual_delivery_times(orders, route_segments):
-    """
-    Oblicza rzeczywisty czas dostawy dla każdego zamówienia na podstawie danych z segmentów tras.
-    """
-    # Filtrujemy segmenty typu STOP, które reprezentują dostawy
+    
+    # Filtracja STOP 
     stops = route_segments[route_segments['segment_type'] == 'STOP'].copy()
     
     if 'segment_start_time' in stops.columns and 'segment_end_time' in stops.columns:
-        # Obliczamy czas trwania każdego przystanku w sekundach
+        #Czas trwania każdego przystanku w sekundach
         stops['actual_delivery_duration'] = (stops['segment_end_time'] - stops['segment_start_time']).dt.total_seconds()
         
-        # Łączymy te dane z zamówieniami
+        # Łączenie danych z zamówieniami
         delivery_times = stops[['order_id', 'actual_delivery_duration']].dropna()
         return pd.merge(orders, delivery_times, on='order_id', how='inner')
-    else:
-        # Jeśli dane o czasie nie są dostępne, tworzymy przykładowe dane
-        print("Uwaga: Dane o czasie nie są dostępne. Generowanie przykładowych czasów dostawy.")
-        orders['actual_delivery_duration'] = orders['planned_delivery_duration'] * np.random.normal(1.1, 0.3, size=len(orders))
-        return orders
+    
 
 def analyze_delivery_times(merged_data):
-    """
-    Generuje histogramy rzeczywistego czasu dostawy i błędu przewidywania.
-    """
-    # Konwertujemy sekundy na minuty i zaokrąglamy w górę
+    
+    # Konwersja sekund na minuty
     merged_data['actual_delivery_minutes'] = np.ceil(merged_data['actual_delivery_duration'] / 60)
     merged_data['planned_delivery_minutes'] = np.ceil(merged_data['planned_delivery_duration'] / 60)
     
-    # Obliczamy błąd przewidywania w minutach
+    # Obliczanie błędu przewidywania w minutach
     merged_data['prediction_error_minutes'] = merged_data['actual_delivery_minutes'] - merged_data['planned_delivery_minutes']
     
     # Histogram rzeczywistego czasu dostawy
@@ -94,19 +86,19 @@ def analyze_sectors(merged_data):
     sector_data.columns = ['avg_actual_duration', 'median_actual_duration', 'std_actual_duration', 
                           'delivery_count', 'avg_planned_duration']
     
-    # Przeliczamy sekundy na minuty dla lepszej czytelności
+    # Przeliczanie sekund na minuty
     sector_data['avg_actual_duration'] /= 60
     sector_data['median_actual_duration'] /= 60
     sector_data['std_actual_duration'] /= 60
     sector_data['avg_planned_duration'] /= 60
     
-    # Obliczamy średni błąd przewidywania dla każdego sektora
+    # Obliczenie średniego błędu przewidywania dla każdego sektora
     sector_data['avg_prediction_error'] = sector_data['avg_actual_duration'] - sector_data['avg_planned_duration']
     
-    # Sortujemy według rzeczywistego czasu dostawy
+    # Sortowanie według rzeczywistego czasu dostawy
     sector_data = sector_data.sort_values('avg_actual_duration', ascending=False).reset_index()
     
-    # Tworzymy wykres porównujący rzeczywisty i planowany czas dostawy dla różnych sektorów
+    # Wykres porównujący rzeczywisty i planowany czas dostawy dla różnych sektorów
     plt.figure(figsize=(14, 8))
     
     bar_width = 0.35
@@ -117,7 +109,7 @@ def analyze_sectors(merged_data):
     plt.bar(x + bar_width/2, sector_data['avg_planned_duration'], bar_width, 
             color='coral', label='Planowany czas dostawy')
     
-    # Dodajemy słupki błędów dla odchylenia standardowego
+    #  słupki błędów dla odchylenia standardowego
     plt.errorbar(x - bar_width/2, sector_data['avg_actual_duration'], 
                 yerr=sector_data['std_actual_duration'], fmt='none', color='black', capsize=5)
     
@@ -134,27 +126,25 @@ def analyze_sectors(merged_data):
     return sector_data
     
 def analyze_weight_impact(merged_data, orders_products, products):
-    """
-    Analizuje wpływ wagi zamówienia na czas dostawy.
-    """
+   
     # Obliczanie łącznej wagi każdego zamówienia
     order_weights = orders_products.merge(products, on='product_id')
     order_weights['total_weight'] = order_weights['quantity'] * order_weights['weight']
     order_weight_sum = order_weights.groupby('order_id')['total_weight'].sum().reset_index()
     
-    # Łączymy z danymi o czasach dostawy
+    # Łączenie z danymi o czasach dostawy
     weight_delivery = merged_data.merge(order_weight_sum, on='order_id')
     
-    # Konwertujemy gramy na kilogramy dla lepszej czytelności
+    # Konwersja gramy na kilogramy
     weight_delivery['total_weight_kg'] = weight_delivery['total_weight'] / 1000
     weight_delivery['actual_delivery_minutes'] = weight_delivery['actual_delivery_duration'] / 60
     
-    # Grupujemy wagę na kategorie dla lepszej wizualizacji
+    # Kategorie wagowe
     weight_bins = [0, 1, 2, 5, 10, 20, 50, 100, 200, np.inf]
     weight_labels = ['0-1', '1-2', '2-5', '5-10', '10-20', '20-50', '50-100', '100-200', '200+']
     weight_delivery['weight_category'] = pd.cut(weight_delivery['total_weight_kg'], bins=weight_bins, labels=weight_labels)
     
-    # Analizujemy średni czas dostawy według kategorii wagowych
+    # Średni czas dostawy według kategorii wagowych
     weight_analysis = weight_delivery.groupby('weight_category').agg({
         'actual_delivery_minutes': ['mean', 'median', 'std', 'count']
     })
@@ -162,13 +152,13 @@ def analyze_weight_impact(merged_data, orders_products, products):
     weight_analysis.columns = ['avg_delivery_time', 'median_delivery_time', 'std_delivery_time', 'count']
     weight_analysis = weight_analysis.reset_index()
     
-    # Tworzymy wykres zależności czasu dostawy od wagi
+    # Wykres zależności czasu dostawy od wagi
     plt.figure(figsize=(14, 8))
     
     plt.bar(weight_analysis['weight_category'], weight_analysis['avg_delivery_time'], 
             color='teal', alpha=0.7)
     
-    # Dodajemy słupki błędów dla odchylenia standardowego
+    # Słupki błędów dla odchylenia standardowego
     plt.errorbar(range(len(weight_analysis)), weight_analysis['avg_delivery_time'], 
                 yerr=weight_analysis['std_delivery_time'], fmt='none', color='black', capsize=5)
     
@@ -181,12 +171,12 @@ def analyze_weight_impact(merged_data, orders_products, products):
     plt.savefig('weight_impact.png', dpi=300)
     plt.close()
     
-    # Scatter plot dla bardziej szczegółowej analizy
+    # Scatter plot 
     plt.figure(figsize=(12, 8))
     sns.scatterplot(data=weight_delivery, x='total_weight_kg', y='actual_delivery_minutes', 
                    hue='sector_id', alpha=0.6, palette='viridis')
     
-    # Dodajemy linię trendu
+    # Linia trendu
     sns.regplot(data=weight_delivery, x='total_weight_kg', y='actual_delivery_minutes', 
                scatter=False, color='red', line_kws={"linestyle": "--"})
     
@@ -195,7 +185,7 @@ def analyze_weight_impact(merged_data, orders_products, products):
     plt.ylabel('Rzeczywisty czas dostawy (minuty)', fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.7)
     
-    # Ograniczamy osie dla lepszej czytelności
+    # Ograniczenie osi
     plt.xlim(0, min(200, weight_delivery['total_weight_kg'].max() * 1.1))
     plt.ylim(0, min(60, weight_delivery['actual_delivery_minutes'].max() * 1.1))
     
@@ -206,11 +196,9 @@ def analyze_weight_impact(merged_data, orders_products, products):
     return weight_analysis
 
 def analyze_driver_performance(merged_data, route_segments):
-    """
-    Analizuje wydajność kierowców w różnych sektorach.
-    """
+   
     if 'segment_start_time' in route_segments.columns and 'segment_end_time' in route_segments.columns:
-        # Obliczamy czas trwania każdego segmentu
+        # Czas trwania każdego segmentu
         route_segments['segment_duration'] = (route_segments['segment_end_time'] - 
                                              route_segments['segment_start_time']).dt.total_seconds() / 60
         
@@ -229,7 +217,7 @@ def analyze_driver_performance(merged_data, route_segments):
         min_segments = 5
         filtered_driver_data = driver_sector[driver_sector['segment_count'] >= min_segments]
         
-        # Tworzymy wykres pudełkowy wydajności kierowców według sektorów
+        # Wykres pudełkowy wydajności kierowców według sektorów
         plt.figure(figsize=(14, 8))
         sns.boxplot(data=driver_data, x='sector_id', y='segment_duration', hue='segment_type')
         
@@ -247,18 +235,16 @@ def analyze_driver_performance(merged_data, route_segments):
         return None
 
 def analyze_time_of_day(route_segments):
-    """
-    Analizuje wpływ pory dnia na czas dostawy.
-    """
+    
     if 'segment_start_time' in route_segments.columns:
         # Dodajemy kolumny z godziną dnia
         route_segments['hour_of_day'] = route_segments['segment_start_time'].dt.hour
         
-        # Filtrujemy tylko segmenty typu STOP (dostawy)
+        # Filtrujemy tylko dostawy (stop) 
         stops = route_segments[route_segments['segment_type'] == 'STOP'].copy()
         
         if 'segment_end_time' in stops.columns:
-            # Obliczamy czas trwania przystanku
+            # Czas trwania przystanku
             stops['stop_duration'] = (stops['segment_end_time'] - stops['segment_start_time']).dt.total_seconds() / 60
             
             # Analizujemy średni czas dostawy według godziny dnia
@@ -269,12 +255,12 @@ def analyze_time_of_day(route_segments):
             hourly_data.columns = ['avg_duration', 'median_duration', 'std_duration', 'count']
             hourly_data = hourly_data.reset_index()
             
-            # Tworzymy wykres zależności czasu dostawy od pory dnia
+            # Wykres zależności czasu dostawy od pory dnia
             plt.figure(figsize=(14, 8))
             
             plt.bar(hourly_data['hour_of_day'], hourly_data['avg_duration'], color='teal', alpha=0.7)
             
-            # Dodajemy słupki błędów dla odchylenia standardowego
+            # Słupki błędów dla odchylenia standardowego
             plt.errorbar(hourly_data['hour_of_day'], hourly_data['avg_duration'], 
                         yerr=hourly_data['std_duration'], fmt='none', color='black', capsize=5)
             
@@ -339,7 +325,7 @@ def main():
         
         print(f"1. Sektor {problem_sector} ma najdłuższy średni czas dostawy: {problem_sector_time:.2f} minut, co jest o {(problem_sector_time/avg_time - 1)*100:.1f}% więcej niż średnia dla wszystkich sektorów.")
         
-        # Identyfikujemy trendy w błędach przewidywania
+        # Identyfikacja trendów w błędach przewidywania
         avg_error = merged_data['prediction_error_minutes'].mean()
         if avg_error > 0:
             print(f"2. Średni błąd przewidywania wynosi {avg_error:.2f} minut (czasy dostawy są zwykle dłuższe niż planowano).")
