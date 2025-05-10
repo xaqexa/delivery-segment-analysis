@@ -11,12 +11,8 @@ from datetime import datetime, time
 import warnings
 import os
 
-# Utworzenie folderu images2, jeśli nie istnieje
-os.makedirs('images2', exist_ok=True)
 
-warnings.filterwarnings('ignore')
-
-# Funkcja do wczytywania danych
+# Wczytywanie danych
 def load_data():
     orders = pd.read_csv('orders.csv')
     products = pd.read_csv('products.csv')
@@ -43,13 +39,12 @@ def process_data(orders, products, orders_products, route_segments):
     df = orders.merge(delivery_times, on='order_id', how='inner')
     
     # Obliczanie wagi całego zamówienia
-    # Najpierw łączymy orders_products z products, aby uzyskać wagę każdego produktu
+    
     order_weights = orders_products.merge(products, on='product_id')
-    # Następnie mnożymy wagę przez ilość i sumujemy dla każdego zamówienia
     order_weights['total_weight'] = order_weights['weight'] * order_weights['quantity']
     order_weights = order_weights.groupby('order_id')['total_weight'].sum().reset_index()
     
-    # Dodajemy informacje o wadze do połączonych danych
+    # Informacje o wadze do połączonych danych
     df = df.merge(order_weights, on='order_id', how='left')
     
     # Dodajemy godzinę dostawy z segmentów typu STOP
@@ -73,7 +68,7 @@ def process_data(orders, products, orders_products, route_segments):
     
     return df
 
-# Funkcja do wizualizacji porównania algorytmów
+# Wizualizacja wizualizacji porównania algorytmów
 def visualize_algorithm_comparison(baseline_errors, sector_errors, rf_errors):
     fig, ax = plt.subplots(figsize=(12, 6))
     
@@ -375,7 +370,7 @@ def analyze_sectors(df):
     
     return sector_stats
 
-# Główna funkcja analizy
+
 def main():
     print("Rozpoczęcie analizy danych dostaw...")
     

@@ -55,7 +55,7 @@ def analyze_delivery_times(merged_data):
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.xticks(rotation=0)
     plt.tight_layout()
-    plt.savefig('histogram_delivery_time.png', dpi=300)
+    plt.savefig('images/histogram_delivery_time.png', dpi=300)
     plt.close()
     
     # Histogram błędu przewidywania
@@ -68,7 +68,7 @@ def analyze_delivery_times(merged_data):
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.tight_layout()
-    plt.savefig('histogram_prediction_error.png', dpi=300)
+    plt.savefig('images/histogram_prediction_error.png', dpi=300)
     plt.close()
     
     return merged_data
@@ -120,7 +120,7 @@ def analyze_sectors(merged_data):
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.tight_layout()
-    plt.savefig('sector_comparison.png', dpi=300)
+    plt.savefig('images/sector_comparison.png', dpi=300)
     plt.close()
     
     return sector_data
@@ -168,7 +168,7 @@ def analyze_weight_impact(merged_data, orders_products, products):
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.savefig('weight_impact.png', dpi=300)
+    plt.savefig('images/weight_impact.png', dpi=300)
     plt.close()
     
     # Scatter plot 
@@ -190,7 +190,7 @@ def analyze_weight_impact(merged_data, orders_products, products):
     plt.ylim(0, min(60, weight_delivery['actual_delivery_minutes'].max() * 1.1))
     
     plt.tight_layout()
-    plt.savefig('weight_delivery_scatter.png', dpi=300)
+    plt.savefig('images/weight_delivery_scatter.png', dpi=300)
     plt.close()
     
     return weight_analysis
@@ -226,7 +226,7 @@ def analyze_driver_performance(merged_data, route_segments):
         plt.ylabel('Czas trwania segmentu (minuty)', fontsize=12)
         plt.grid(True, linestyle='--', alpha=0.7)
         plt.tight_layout()
-        plt.savefig('driver_sector_performance.png', dpi=300)
+        plt.savefig('images/driver_sector_performance.png', dpi=300)
         plt.close()
         
         return driver_sector
@@ -270,7 +270,7 @@ def analyze_time_of_day(route_segments):
             plt.grid(True, linestyle='--', alpha=0.7)
             plt.xticks(range(0, 24))
             plt.tight_layout()
-            plt.savefig('time_of_day_impact.png', dpi=300)
+            plt.savefig('images/time_of_day_impact.png', dpi=300)
             plt.close()
             
             return hourly_data
@@ -313,7 +313,7 @@ def main():
         if time_analysis is not None:
             print("Przeprowadzono analizę wpływu pory dnia na czas dostawy.")
         
-        print("\nAnaliza zakończona. Wszystkie wykresy zostały zapisane w bieżącym katalogu.")
+        print("\nAnaliza zakończona! Wszystkie wykresy zostały zapisane w folderze 'images'.")
         
         # Wyświetlenie kluczowych wyników
         print("\nKluczowe wnioski:")
