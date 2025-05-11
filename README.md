@@ -1,11 +1,13 @@
 # delivery-segment-analysis
 
-### 
+### OPIS 
+```bash
 Imię: Karol
 Nazwisko: Dzierżak
 Data: 11 maja 2025
 Lokalizacja: Kraków
 Stos technologiczny: Python
+```
 
 ##  Jak uruchomić projekt
 
